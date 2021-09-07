@@ -8,7 +8,7 @@ import (
 
 func DeleteTop(app *application.AppContext, filename string) {
 
-	file := files.NewFileFromStore(app, app.Config.GetTopFolder(), filename, app.Config)
+	file := files.NewFileFromStore(app, app.Config.GetTopFolder(), filename)
 	top, err := NewTop(app, file)
 	if err != nil {
 		slog.Fatal("err: %+v", err)
@@ -22,7 +22,7 @@ func DeleteTop(app *application.AppContext, filename string) {
 
 func DeleteSitzung(app *application.AppContext, filename string) {
 
-	file := files.NewFileFromStore(app, app.Config.GetSitzungenFolder(), filename, app.Config)
+	file := files.NewFileFromStore(app, app.Config.GetSitzungenFolder(), filename)
 	sitzung, err := NewSitzung(app, file)
 	if err != nil {
 		slog.Fatal("err: %+v", err)
@@ -36,7 +36,7 @@ func DeleteSitzung(app *application.AppContext, filename string) {
 
 func DeleteVorlage(app *application.AppContext, filename string) {
 
-	file := files.NewFileFromStore(app, app.Config.GetVorlagenFolder(), filename, app.Config)
+	file := files.NewFileFromStore(app, app.Config.GetVorlagenFolder(), filename)
 	vorlage, err := NewVorlage(app, file)
 	if err != nil {
 		slog.Fatal("err: %+v", err)
@@ -50,7 +50,7 @@ func DeleteVorlage(app *application.AppContext, filename string) {
 
 func UpdateVorlage(app *application.AppContext, filename string) {
 
-	file := files.NewFileFromStore(app, app.Config.GetVorlagenFolder(), filename, app.Config)
+	file := files.NewFileFromStore(app, app.Config.GetVorlagenFolder(), filename)
 	vorlage, err := NewVorlage(app, file)
 	if err != nil {
 		slog.Fatal("err: %+v", err)
@@ -64,7 +64,7 @@ func UpdateVorlage(app *application.AppContext, filename string) {
 
 func UpdateTop(app *application.AppContext, filename string) {
 
-	file := files.NewFileFromStore(app, app.Config.GetTopFolder(), filename, app.Config)
+	file := files.NewFileFromStore(app, app.Config.GetTopFolder(), filename)
 	top, err := NewTop(app, file)
 	if err != nil {
 		slog.Fatal("err: %+v", err)
@@ -79,7 +79,7 @@ func UpdateTop(app *application.AppContext, filename string) {
 
 func UpdateSitzung(app *application.AppContext, filename string) {
 
-	file := files.NewFileFromStore(app, app.Config.GetSitzungenFolder(), filename, app.Config)
+	file := files.NewFileFromStore(app, app.Config.GetSitzungenFolder(), filename)
 	sitzung, err := NewSitzung(app, file)
 	if err != nil {
 		slog.Fatal("err: %+v", err)

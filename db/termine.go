@@ -27,7 +27,7 @@ type Termin struct {
 
 func UpdateTermine(app *application.AppContext, minDate time.Time) error {
 
-	f := files.NewFileFromStore(app, "", app.Config.GetAlleSitzungenType()+".html", app.Config)
+	f := files.NewFileFromStore(app, "", app.Config.GetAlleSitzungenType()+".html")
 	err := f.ReadDocument(app.Config.GetBucketFetched())
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("error reading file %s", app.Config.GetAlleSitzungenType()))
