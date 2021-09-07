@@ -1,14 +1,14 @@
 package db
 
 import (
-	"github.com/rismaster/allris-db/application"
-	"github.com/rismaster/allris-common/common/domtools"
-	"github.com/rismaster/allris-common/common/files"
-	"github.com/rismaster/allris-db/config"
 	"cloud.google.com/go/datastore"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/kennygrant/sanitize"
+	allris_common "github.com/rismaster/allris-common"
+	"github.com/rismaster/allris-common/application"
+	"github.com/rismaster/allris-common/common/domtools"
+	"github.com/rismaster/allris-common/common/files"
 	"regexp"
 	"strconv"
 	"time"
@@ -27,6 +27,7 @@ type Anlage struct {
 	SavedAt time.Time
 
 	parent TopHolder
+	Config allris_common.Config
 }
 
 var RegexTopAnlage = regexp.MustCompile(`sitzung-([0-9]+)-top-([0-9]+)-anlage-(.+)`)
@@ -34,7 +35,7 @@ var RegexAnlagen = regexp.MustCompile(`(vorlage|sitzung)-([0-9]+)-(basisanlage|a
 
 func (a *Anlage) GetKey(parentKey *datastore.Key) *datastore.Key {
 	kn := fmt.Sprintf("%d_%d_%d_%d_%s", a.DOLFDNR, a.SILFDNR, a.TOLFDNR, a.VOLFDNR, a.Title)
-	return datastore.NameKey(config.EntityAnlage, sanitize.Name(kn), parentKey)
+	return datastore.NameKey(a.Config.GetEntityAnlage(), sanitize.Name(kn), parentKey)
 }
 
 func NewAnlage(app *application.AppContext, file *files.File) (*Anlage, error) {
@@ -60,19 +61,19 @@ func NewAnlage(app *application.AppContext, file *files.File) (*Anlage, error) {
 
 		silfdnr = sil
 		tolfdnr = tol
-		anlageType = config.AnlageType
+		anlageType = app.Config.GetAnlageType()
 
 	} else if RegexAnlagen.MatchString(filename) {
 		matches := RegexAnlagen.FindStringSubmatch(filename)
 
-		if matches[1] == config.SitzungType {
+		if matches[1] == app.Config.GetSitzungType() {
 
 			sil, err := strconv.Atoi(matches[2])
 			if err != nil {
 				return nil, err
 			}
 			silfdnr = sil
-		} else if matches[1] == config.VorlageType {
+		} else if matches[1] == app.Config.GetVorlageType() {
 
 			vol, err := strconv.Atoi(matches[2])
 			if err != nil {
@@ -83,7 +84,7 @@ func NewAnlage(app *application.AppContext, file *files.File) (*Anlage, error) {
 
 		anlageType = matches[3]
 
-		if anlageType == config.AnlageDocumentType {
+		if anlageType == app.Config.GetAnlageDocumentType() {
 
 			dol, err := strconv.Atoi(matches[5])
 			if err != nil {
@@ -101,10 +102,11 @@ func NewAnlage(app *application.AppContext, file *files.File) (*Anlage, error) {
 		VOLFDNR:  volfdnr,
 		Filename: filename,
 		Type:     anlageType,
+		Config:   app.Config,
 	}, nil
 }
 
-func ExtractAnlagen(dom *goquery.Selection) (docs []*Anlage) {
+func ExtractAnlagen(dom *goquery.Selection, config allris_common.Config) (docs []*Anlage) {
 
 	theAnlagenTables := dom.Find("table.tk1")
 	if theAnlagenTables.Size() <= 1 {
@@ -123,8 +125,9 @@ func ExtractAnlagen(dom *goquery.Selection) (docs []*Anlage) {
 			if lnk != nil {
 				description := domtools.GetChildTextFromNode(lnk)
 				doc := &Anlage{
-					Title: description,
-					Type:  config.AnlageType,
+					Title:  description,
+					Type:   config.GetAnlageType(),
+					Config: config,
 				}
 				docs = append(docs, doc)
 			}
@@ -133,10 +136,10 @@ func ExtractAnlagen(dom *goquery.Selection) (docs []*Anlage) {
 	return docs
 }
 
-func ExtractBasisAnlagen(dom *goquery.Selection) (docs []*Anlage) {
+func ExtractBasisAnlagen(dom *goquery.Selection, config allris_common.Config) (docs []*Anlage) {
 
 	theTopTable := dom.Find(".me1 > table.tk1").First()
-	selector := "form[action=\"" + config.UrlAnlagedoc + "\"]"
+	selector := "form[action=\"" + config.GetUrlAnlagedoc() + "\"]"
 	var form = theTopTable.Find(selector)
 	for ; form.Nodes != nil; form = form.NextFiltered(selector) {
 		dolfdnr := domtools.ExtractIntFromInput(form, "DOLFDNR")
@@ -146,7 +149,8 @@ func ExtractBasisAnlagen(dom *goquery.Selection) (docs []*Anlage) {
 		docs = append(docs, &Anlage{
 			Title:   title,
 			DOLFDNR: dolfdnr,
-			Type:    config.AnlageDocumentType,
+			Type:    config.GetAnlageDocumentType(),
+			Config:  config,
 		})
 
 	}

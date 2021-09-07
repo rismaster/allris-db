@@ -1,15 +1,14 @@
 package db
 
 import (
-	"github.com/rismaster/allris-db/application"
-	"github.com/rismaster/allris-common/common/domtools"
-	"github.com/rismaster/allris-common/common/files"
-	"github.com/rismaster/allris-common/common/slog"
-	"github.com/rismaster/allris-db/config"
 	"cloud.google.com/go/datastore"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/pkg/errors"
+	"github.com/rismaster/allris-common/application"
+	"github.com/rismaster/allris-common/common/domtools"
+	"github.com/rismaster/allris-common/common/files"
+	"github.com/rismaster/allris-common/common/slog"
 	"net/url"
 	"sort"
 	"strconv"
@@ -56,11 +55,11 @@ func NewVorlage(app *application.AppContext, file *files.File) (*Vorlage, error)
 }
 
 func (v *Vorlage) GetTopQuery() *datastore.Query {
-	return datastore.NewQuery(config.EntityTop).Filter("VOLFDNR =", v.VOLFDNR)
+	return datastore.NewQuery(v.app.Config.GetEntityTop()).Filter("VOLFDNR =", v.VOLFDNR)
 }
 
 func (v *Vorlage) GetDirectAnlagenQuery() *datastore.Query {
-	return datastore.NewQuery(config.EntityAnlage).Ancestor(v.GetKey())
+	return datastore.NewQuery(v.app.Config.GetEntityAnlage()).Ancestor(v.GetKey())
 }
 
 func (v *Vorlage) GetFile() *files.File {
@@ -80,7 +79,7 @@ func (v *Vorlage) GetAnlagen() []*Anlage {
 }
 
 func (v *Vorlage) GetKey() *datastore.Key {
-	return datastore.NameKey(config.EntityVorlage, fmt.Sprintf("%d", v.VOLFDNR), nil)
+	return datastore.NameKey(v.app.Config.GetEntityVorlage(), fmt.Sprintf("%d", v.VOLFDNR), nil)
 }
 
 func (v *Vorlage) Parse(doc *goquery.Document) error {
@@ -98,13 +97,13 @@ func (v *Vorlage) parseElement(dom *goquery.Selection) error {
 	topTblx := dom.Find("table.tk1")
 
 	bez, cont := domtools.ParseTable(topTblx.Find("tr > td.kb1"))
-	v.anlagen = ExtractAnlagen(dom)
+	v.anlagen = ExtractAnlagen(dom, v.app.Config)
 
 	for _, a := range v.anlagen {
 		a.VOLFDNR = v.VOLFDNR
 	}
 
-	basisanlagen := ExtractBasisAnlagen(dom)
+	basisanlagen := ExtractBasisAnlagen(dom, v.app.Config)
 	for _, a := range basisanlagen {
 		v.anlagen = append(v.anlagen, a)
 		a.VOLFDNR = v.VOLFDNR
@@ -121,13 +120,13 @@ func (v *Vorlage) parseElement(dom *goquery.Selection) error {
 	v.Bearbeiter = domtools.FindIndex(bez, cont, "Bearbeiter/-in:")
 
 	bvhtml, _ := dom.Find("a[name=\"allrisBV\"]").NextFilteredUntil("div", "a").Html()
-	v.BeschlussVorlage = domtools.SanatizeHtml(bvhtml)
+	v.BeschlussVorlage = domtools.SanatizeHtml(bvhtml, v.app.Config)
 	bghtml, _ := dom.Find("a[name=\"allrisSV\"]").
 		NextFilteredUntil("div", "a").Html()
-	v.Begruendung = domtools.SanatizeHtml(bghtml)
+	v.Begruendung = domtools.SanatizeHtml(bghtml, v.app.Config)
 	fahtml, _ := dom.Find("a[name=\"allrisFA\"]").
 		NextFilteredUntil("div", "a").Html()
-	v.FinanzielleAuswirkung = domtools.SanatizeHtml(fahtml)
+	v.FinanzielleAuswirkung = domtools.SanatizeHtml(fahtml, v.app.Config)
 
 	//theTopTable := dom.Find(".me1 > table.tk1").First()
 
@@ -164,7 +163,7 @@ func (v *Vorlage) parseElement(dom *goquery.Selection) error {
 		} else if topTds.Size() == 7 {
 
 			missingBerDetails = false
-			t, err := time.Parse(config.DateFormat, domtools.CleanText(topTds.Find("a").First().Text()))
+			t, err := time.Parse(v.app.Config.GetDateFormat(), domtools.CleanText(topTds.Find("a").First().Text()))
 			if err == nil {
 				beratung.Datum = t
 			}

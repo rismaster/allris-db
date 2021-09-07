@@ -1,15 +1,14 @@
 package db
 
 import (
-	"github.com/rismaster/allris-db/application"
-	"github.com/rismaster/allris-common/common/domtools"
-	"github.com/rismaster/allris-common/common/files"
-	"github.com/rismaster/allris-common/common/slog"
-	"github.com/rismaster/allris-db/config"
 	"cloud.google.com/go/datastore"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/pkg/errors"
+	"github.com/rismaster/allris-common/application"
+	"github.com/rismaster/allris-common/common/domtools"
+	"github.com/rismaster/allris-common/common/files"
+	"github.com/rismaster/allris-common/common/slog"
 	"regexp"
 	"strconv"
 	"strings"
@@ -78,15 +77,15 @@ func NewTop(app *application.AppContext, file *files.File) (*Top, error) {
 }
 
 func (t *Top) GetDirectAnlagenQuery() *datastore.Query {
-	return datastore.NewQuery(config.EntityAnlage).Ancestor(t.GetKey())
+	return datastore.NewQuery(t.app.Config.GetEntityAnlage()).Ancestor(t.GetKey())
 }
 
 func (t *Top) GetSitzungKey() *datastore.Key {
-	return datastore.NameKey(config.EntitySitzung, fmt.Sprintf("%d", t.SILFDNR), nil)
+	return datastore.NameKey(t.app.Config.GetEntitySitzung(), fmt.Sprintf("%d", t.SILFDNR), nil)
 }
 
 func (t *Top) GetKey() *datastore.Key {
-	return datastore.NameKey(config.EntityTop, fmt.Sprintf("%d", t.TOLFDNR), t.GetSitzungKey())
+	return datastore.NameKey(t.app.Config.GetEntityTop(), fmt.Sprintf("%d", t.TOLFDNR), t.GetSitzungKey())
 }
 
 func (t *Top) GetFile() *files.File {
@@ -121,7 +120,7 @@ func (t *Top) Parse(doc *goquery.Document) error {
 
 func (t *Top) parseElement(dom *goquery.Selection) error {
 
-	t.anlagen = ExtractAnlagen(dom)
+	t.anlagen = ExtractAnlagen(dom, t.app.Config)
 
 	for _, a := range t.anlagen {
 		a.SILFDNR = t.SILFDNR
@@ -132,15 +131,15 @@ func (t *Top) parseElement(dom *goquery.Selection) error {
 
 	allrisBS, _ := dom.Find("a[name=\"allrisBS\"]").
 		NextFilteredUntil("div", "a").Html()
-	t.Beschluss = domtools.SanatizeHtml(allrisBS)
+	t.Beschluss = domtools.SanatizeHtml(allrisBS, t.app.Config)
 
 	allrisWP, _ := dom.Find("a[name=\"allrisWP\"]").
 		NextFilteredUntil("div", "a").Html()
-	t.Protokoll = domtools.SanatizeHtml(allrisWP)
+	t.Protokoll = domtools.SanatizeHtml(allrisWP, t.app.Config)
 
 	allrisRE, _ := dom.Find("a[name=\"allrisRE\"]").
 		NextFilteredUntil("div", "a").Html()
-	t.ProtokollRe = domtools.SanatizeHtml(allrisRE)
+	t.ProtokollRe = domtools.SanatizeHtml(allrisRE, t.app.Config)
 
 	t.parseAbstimmungsErgebnis(dom.Find("a[name=\"allrisAE\"]").
 		NextFilteredUntil("div", "a"))
@@ -159,7 +158,7 @@ func (t *Top) parseElement(dom *goquery.Selection) error {
 	t.VOLFDNR = domtools.ExtractIntFromInput(dom, "VOLFDNR")
 
 	datumString := domtools.FindIndex(bez, cont, "Datum:")
-	datum, err2 := domtools.ExtractWeekdayDateFromCommaSeparated(datumString, "00:00")
+	datum, err2 := domtools.ExtractWeekdayDateFromCommaSeparated(datumString, "00:00", t.app.Config)
 	if err2 != nil {
 		return err2
 	} else {
@@ -231,7 +230,7 @@ func (t *Top) SaveOrUpdate() error {
 
 func (t *Top) Delete() error {
 
-	ks, err := t.app.Db().GetAll(t.app.Ctx(), datastore.NewQuery(config.EntityAnlage).Ancestor(t.GetKey()).KeysOnly(), nil)
+	ks, err := t.app.Db().GetAll(t.app.Ctx(), datastore.NewQuery(t.app.Config.GetEntityAnlage()).Ancestor(t.GetKey()).KeysOnly(), nil)
 	if err != nil {
 		return errors.Wrap(err, "error getting anlagen from db")
 	}

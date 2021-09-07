@@ -1,15 +1,14 @@
 package db
 
 import (
-	"github.com/rismaster/allris-db/application"
-	"github.com/rismaster/allris-common/common/files"
-	"github.com/rismaster/allris-common/common/slog"
-	"github.com/rismaster/allris-db/config"
 	"bytes"
 	"cloud.google.com/go/datastore"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/pkg/errors"
+	"github.com/rismaster/allris-common/application"
+	"github.com/rismaster/allris-common/common/files"
+	"github.com/rismaster/allris-common/common/slog"
 	"time"
 )
 
@@ -35,9 +34,9 @@ func Sync(app *application.AppContext, s TopHolder) error {
 
 	file := s.GetFile()
 
-	err := file.ReadDocument(config.BucketFetched)
+	err := file.ReadDocument(app.Config.GetBucketFetched())
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("error reading file %s", config.AlleSitzungenType))
+		return errors.Wrap(err, fmt.Sprintf("error reading file %s", app.Config.GetAlleSitzungenType()))
 	}
 
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(file.GetContent()))

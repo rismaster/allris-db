@@ -1,17 +1,16 @@
 package db
 
 import (
-	"github.com/rismaster/allris-db/application"
-	"github.com/rismaster/allris-common/common/db"
-	"github.com/rismaster/allris-common/common/files"
-	"github.com/rismaster/allris-common/common/slog"
-	"github.com/rismaster/allris-db/config"
 	"bytes"
 	"cloud.google.com/go/datastore"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/kennygrant/sanitize"
 	"github.com/pkg/errors"
+	"github.com/rismaster/allris-common/application"
+	"github.com/rismaster/allris-common/common/db"
+	"github.com/rismaster/allris-common/common/files"
+	"github.com/rismaster/allris-common/common/slog"
 	"net/url"
 	"strconv"
 	"strings"
@@ -28,10 +27,10 @@ type Termin struct {
 
 func UpdateTermine(app *application.AppContext, minDate time.Time) error {
 
-	f := files.NewFileFromStore(app, "", config.AlleSitzungenType+".html")
-	err := f.ReadDocument(config.BucketFetched)
+	f := files.NewFileFromStore(app, "", app.Config.GetAlleSitzungenType()+".html", app.Config)
+	err := f.ReadDocument(app.Config.GetBucketFetched())
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("error reading file %s", config.AlleSitzungenType))
+		return errors.Wrap(err, fmt.Sprintf("error reading file %s", app.Config.GetAlleSitzungenType()))
 	}
 
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(f.GetContent()))
@@ -39,7 +38,7 @@ func UpdateTermine(app *application.AppContext, minDate time.Time) error {
 		return errors.Wrap(err, fmt.Sprintf("error create dom from %s", f.GetName()))
 	}
 
-	termine, err := parseTerminList(doc)
+	termine, err := parseTerminList(app, doc)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("error parsing dom from %s", f.GetName()))
 	}
@@ -51,8 +50,8 @@ func UpdateTermine(app *application.AppContext, minDate time.Time) error {
 	var tmap = make(map[string]bool)
 	var terminKeys []*datastore.Key
 	for _, termin := range termine {
-		keyName := sanitize.Path(termin.Gremium + "_" + termin.Start.Format(config.DateFormatTech))
-		key := datastore.NameKey(config.EntityTermin, keyName, nil)
+		keyName := sanitize.Path(termin.Gremium + "_" + termin.Start.Format(app.Config.GetDateFormatTech()))
+		key := datastore.NameKey(app.Config.GetEntityTermin(), keyName, nil)
 		exist := tmap[key.Encode()]
 		if !exist && termin.Start.After(minDate) {
 
@@ -61,7 +60,7 @@ func UpdateTermine(app *application.AppContext, minDate time.Time) error {
 		}
 	}
 
-	qberdel := datastore.NewQuery(config.EntityTermin).Filter("Start > ", minDate).KeysOnly()
+	qberdel := datastore.NewQuery(app.Config.GetEntityTermin()).Filter("Start > ", minDate).KeysOnly()
 
 	oldKeys, err1 := app.Db().GetAll(app.Ctx(), qberdel, nil)
 	if err1 != nil {
@@ -99,14 +98,14 @@ func UpdateTermine(app *application.AppContext, minDate time.Time) error {
 	return nil
 }
 
-func parseTerminList(doc *goquery.Document) (termine []Termin, err error) {
+func parseTerminList(app *application.AppContext, doc *goquery.Document) (termine []Termin, err error) {
 
 	selector := "tr.zl11,tr.zl12"
 	doc.Find(selector).Each(func(index int, selection *goquery.Selection) {
 
 		if selection.Children().Size() >= 8 {
 
-			sitzung, lastErr := parseTermin(selection)
+			sitzung, lastErr := parseTermin(app, selection)
 			if lastErr == nil {
 				termine = append(termine, *sitzung)
 			} else {
@@ -117,7 +116,7 @@ func parseTerminList(doc *goquery.Document) (termine []Termin, err error) {
 	return termine, err
 }
 
-func parseTermin(e *goquery.Selection) (*Termin, error) {
+func parseTermin(app *application.AppContext, e *goquery.Selection) (*Termin, error) {
 
 	lnkTr := e.Find(":nth-child(2) a")
 	lnk, _ := lnkTr.Attr("href")
@@ -132,8 +131,8 @@ func parseTermin(e *goquery.Selection) (*Termin, error) {
 	timeTr := strings.Split(strings.TrimSpace(e.Find(":nth-child(7)").Text()), " - ")
 	dateTimetxt := fmt.Sprintf("%s %s:00", dateText, timeTr[0])
 
-	localTz, _ := time.LoadLocation(config.Timezone)
-	startTime, err := time.ParseInLocation(config.DateFormatWithTime, dateTimetxt, localTz)
+	localTz, _ := time.LoadLocation(app.Config.GetTimezone())
+	startTime, err := time.ParseInLocation(app.Config.GetDateFormatWithTime(), dateTimetxt, localTz)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +141,7 @@ func parseTermin(e *goquery.Selection) (*Termin, error) {
 	if len(timeTr) > 1 && len(timeTr[1]) > 0 {
 
 		endDateTxt := fmt.Sprintf("%s %s:00", dateText, timeTr[1])
-		endTime, err = time.ParseInLocation(config.DateFormatWithTime, endDateTxt, localTz)
+		endTime, err = time.ParseInLocation(app.Config.GetDateFormatWithTime(), endDateTxt, localTz)
 		if err != nil {
 			return nil, err
 		}

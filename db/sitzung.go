@@ -1,15 +1,14 @@
 package db
 
 import (
-	"github.com/rismaster/allris-db/application"
-	"github.com/rismaster/allris-common/common/domtools"
-	"github.com/rismaster/allris-common/common/files"
-	"github.com/rismaster/allris-common/common/slog"
-	"github.com/rismaster/allris-db/config"
 	"cloud.google.com/go/datastore"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/pkg/errors"
+	"github.com/rismaster/allris-common/application"
+	"github.com/rismaster/allris-common/common/domtools"
+	"github.com/rismaster/allris-common/common/files"
+	"github.com/rismaster/allris-common/common/slog"
 	"net/url"
 	"strconv"
 	"strings"
@@ -50,11 +49,11 @@ func NewSitzung(app *application.AppContext, file *files.File) (*Sitzung, error)
 }
 
 func (s *Sitzung) GetTopQuery() *datastore.Query {
-	return datastore.NewQuery(config.EntityTop).Ancestor(s.GetKey())
+	return datastore.NewQuery(s.app.Config.GetEntityTop()).Ancestor(s.GetKey())
 }
 
 func (s *Sitzung) GetDirectAnlagenQuery() *datastore.Query {
-	return datastore.NewQuery(config.EntityAnlage).Ancestor(s.GetKey()).Filter("TOLFDNR = ", 0)
+	return datastore.NewQuery(s.app.Config.GetEntityAnlage()).Ancestor(s.GetKey()).Filter("TOLFDNR = ", 0)
 }
 
 func (s *Sitzung) GetFile() *files.File {
@@ -74,7 +73,7 @@ func (s *Sitzung) GetAnlagen() []*Anlage {
 }
 
 func (s *Sitzung) GetKey() *datastore.Key {
-	return datastore.NameKey(config.EntitySitzung, fmt.Sprintf("%d", s.SILFDNR), nil)
+	return datastore.NameKey(s.app.Config.GetEntitySitzung(), fmt.Sprintf("%d", s.SILFDNR), nil)
 }
 
 func (s *Sitzung) Parse(doc *goquery.Document) error {
@@ -91,13 +90,13 @@ func (s *Sitzung) parseElement(dom *goquery.Selection) error {
 
 	bez, cont := domtools.ParseTable(dom.Find("table.tk1").Find("tr > td.kb1"))
 
-	s.anlagen = ExtractAnlagen(dom)
+	s.anlagen = ExtractAnlagen(dom, s.app.Config)
 
 	for _, a := range s.anlagen {
 		a.SILFDNR = s.SILFDNR
 	}
 
-	basisanlagen := ExtractBasisAnlagen(dom)
+	basisanlagen := ExtractBasisAnlagen(dom, s.app.Config)
 	for _, a := range basisanlagen {
 		s.anlagen = append(s.anlagen, a)
 		a.SILFDNR = s.SILFDNR
@@ -112,7 +111,7 @@ func (s *Sitzung) parseElement(dom *goquery.Selection) error {
 	s.Uhrzeit = domtools.FindIndex(bez, cont, "Zeit:")
 	datumString := domtools.FindIndex(bez, cont, "Datum:")
 
-	datum, err := domtools.ExtractWeekdayDateFromCommaSeparated(datumString, s.Uhrzeit)
+	datum, err := domtools.ExtractWeekdayDateFromCommaSeparated(datumString, s.Uhrzeit, s.app.Config)
 	if err != nil {
 		return err
 	}
@@ -222,7 +221,7 @@ func (s *Sitzung) SaveOrUpdate() error {
 
 func (s *Sitzung) Delete() error {
 
-	ks, err := s.app.Db().GetAll(s.app.Ctx(), datastore.NewQuery(config.EntityAnlage).Ancestor(s.GetKey()).KeysOnly(), nil)
+	ks, err := s.app.Db().GetAll(s.app.Ctx(), datastore.NewQuery(s.app.Config.GetEntityAnlage()).Ancestor(s.GetKey()).KeysOnly(), nil)
 	if err != nil {
 		return errors.Wrap(err, "error getting anlagen from db")
 	}
