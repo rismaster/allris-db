@@ -23,6 +23,8 @@ type Termin struct {
 	Start   time.Time
 	End     time.Time
 	file    files.File
+
+	SavedAt time.Time
 }
 
 func UpdateTermine(app *application.AppContext, minDate time.Time) error {
@@ -165,5 +167,6 @@ func parseTermin(app *application.AppContext, e *goquery.Selection) (*Termin, er
 		Start:   startTime,
 		End:     endTime,
 		SILFDNR: silfdnrInt,
+		SavedAt: time.Now(),
 	}, nil
 }

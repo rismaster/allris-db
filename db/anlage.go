@@ -103,6 +103,7 @@ func NewAnlage(app *application.AppContext, file *files.File) (*Anlage, error) {
 		Filename: filename,
 		Type:     anlageType,
 		Config:   app.Config,
+		SavedAt:  time.Now(),
 	}, nil
 }
 
@@ -151,6 +152,7 @@ func ExtractBasisAnlagen(dom *goquery.Selection, config allris_common.Config) (d
 			DOLFDNR: dolfdnr,
 			Type:    config.GetAnlageDocumentType(),
 			Config:  config,
+			SavedAt: time.Now(),
 		})
 
 	}
