@@ -142,6 +142,7 @@ func (s *Sitzung) parseTop(selection *goquery.Selection) *Top {
 		Datum:   s.Datum,
 		Gremium: s.Gremium,
 		SavedAt: time.Now(),
+		app:     s.app,
 	}
 
 	topHref, exist := topTds.Find("a[title=\"Auswählen\"]").Attr("href")

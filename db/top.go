@@ -85,10 +85,6 @@ func (t *Top) GetSitzungKey() *datastore.Key {
 }
 
 func (t *Top) GetKey() *datastore.Key {
-	slog.Info(t.app.Config.GetEntityTop())
-	slog.Info("%v", t.GetSitzungKey())
-	slog.Info("%v", t.GetFile())
-	slog.Info(strconv.Itoa(t.TOLFDNR))
 	return datastore.NameKey(t.app.Config.GetEntityTop(), fmt.Sprintf("%d", t.TOLFDNR), t.GetSitzungKey())
 }
 
