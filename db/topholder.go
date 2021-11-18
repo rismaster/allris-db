@@ -36,7 +36,7 @@ func Sync(app *application.AppContext, s TopHolder) error {
 
 	err := file.ReadDocument(app.Config.GetBucketFetched())
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("error reading file %s", app.Config.GetAlleSitzungenType()))
+		return errors.Wrap(err, fmt.Sprintf("error reading file %s (%s)", file.GetPath(), app.Config.GetAlleSitzungenType()))
 	}
 
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(file.GetContent()))
