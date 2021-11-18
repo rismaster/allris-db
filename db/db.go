@@ -4,11 +4,12 @@ import (
 	"github.com/rismaster/allris-common/application"
 	"github.com/rismaster/allris-common/common/files"
 	"github.com/rismaster/allris-common/common/slog"
+	"strings"
 )
 
-func DeleteTop(app *application.AppContext, filename string) {
+func DeleteTop(app *application.AppContext, filepath string) {
 
-	file := files.NewFileFromStore(app, app.Config.GetTopFolder(), filename)
+	file := files.NewFileFromStore(app, app.Config.GetTopFolder(), strings.TrimPrefix(filepath, app.Config.GetTopFolder()))
 	top, err := NewTop(app, file)
 	if err != nil {
 		slog.Fatal("err: %+v", err)
@@ -20,9 +21,9 @@ func DeleteTop(app *application.AppContext, filename string) {
 	}
 }
 
-func DeleteSitzung(app *application.AppContext, filename string) {
+func DeleteSitzung(app *application.AppContext, filepath string) {
 
-	file := files.NewFileFromStore(app, app.Config.GetSitzungenFolder(), filename)
+	file := files.NewFileFromStore(app, app.Config.GetSitzungenFolder(), strings.TrimPrefix(filepath, app.Config.GetSitzungenFolder()))
 	sitzung, err := NewSitzung(app, file)
 	if err != nil {
 		slog.Fatal("err: %+v", err)
@@ -34,9 +35,9 @@ func DeleteSitzung(app *application.AppContext, filename string) {
 	}
 }
 
-func DeleteVorlage(app *application.AppContext, filename string) {
+func DeleteVorlage(app *application.AppContext, filepath string) {
 
-	file := files.NewFileFromStore(app, app.Config.GetVorlagenFolder(), filename)
+	file := files.NewFileFromStore(app, app.Config.GetVorlagenFolder(), strings.TrimPrefix(filepath, app.Config.GetVorlagenFolder()))
 	vorlage, err := NewVorlage(app, file)
 	if err != nil {
 		slog.Fatal("err: %+v", err)
@@ -48,9 +49,9 @@ func DeleteVorlage(app *application.AppContext, filename string) {
 	}
 }
 
-func UpdateVorlage(app *application.AppContext, filename string) {
+func UpdateVorlage(app *application.AppContext, filepath string) {
 
-	file := files.NewFileFromStore(app, app.Config.GetVorlagenFolder(), filename)
+	file := files.NewFileFromStore(app, app.Config.GetVorlagenFolder(), strings.TrimPrefix(filepath, app.Config.GetVorlagenFolder()))
 	vorlage, err := NewVorlage(app, file)
 	if err != nil {
 		slog.Fatal("err: %+v", err)
@@ -62,9 +63,9 @@ func UpdateVorlage(app *application.AppContext, filename string) {
 	}
 }
 
-func UpdateTop(app *application.AppContext, filename string) {
+func UpdateTop(app *application.AppContext, filepath string) {
 
-	file := files.NewFileFromStore(app, app.Config.GetTopFolder(), filename)
+	file := files.NewFileFromStore(app, app.Config.GetTopFolder(), strings.TrimPrefix(filepath, app.Config.GetTopFolder()))
 	top, err := NewTop(app, file)
 	if err != nil {
 		slog.Fatal("err: %+v", err)
@@ -77,9 +78,9 @@ func UpdateTop(app *application.AppContext, filename string) {
 
 }
 
-func UpdateSitzung(app *application.AppContext, filename string) {
+func UpdateSitzung(app *application.AppContext, filepath string) {
 
-	file := files.NewFileFromStore(app, app.Config.GetSitzungenFolder(), filename)
+	file := files.NewFileFromStore(app, app.Config.GetSitzungenFolder(), strings.TrimPrefix(filepath, app.Config.GetSitzungenFolder()))
 	sitzung, err := NewSitzung(app, file)
 	if err != nil {
 		slog.Fatal("err: %+v", err)

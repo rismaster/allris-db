@@ -36,7 +36,7 @@ type Sitzung struct {
 
 func NewSitzung(app *application.AppContext, file *files.File) (*Sitzung, error) {
 
-	silfdnrStr := strings.TrimPrefix(strings.TrimSuffix(file.GetName(), ".html"), "sitzungen/sitzung-")
+	silfdnrStr := strings.TrimPrefix(strings.TrimSuffix(file.GetName(), ".html"), "sitzung-")
 	silfdnr, err := strconv.Atoi(silfdnrStr)
 	if err != nil {
 		return nil, err
