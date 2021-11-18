@@ -94,7 +94,8 @@ func UpdateTermine(app *application.AppContext, minDate time.Time) error {
 		return err2
 	})
 	if err1 != nil {
-		return errors.Wrap(err1, "error puting batch into db")
+
+		slog.Fatal("err: %+v", err)
 	}
 
 	return nil
