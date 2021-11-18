@@ -51,7 +51,7 @@ type Top struct {
 
 func NewTop(app *application.AppContext, file *files.File) (*Top, error) {
 
-	var validID = regexp.MustCompile(`sitzung-([0-9]+)-top-([0-9]+)\.html`)
+	var validID = regexp.MustCompile(`tops/sitzung-([0-9]+)-top-([0-9]+)\.html`)
 	matches := validID.FindStringSubmatch(file.GetName())
 	if len(matches) >= 3 {
 

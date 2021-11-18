@@ -30,8 +30,8 @@ type Anlage struct {
 	Config allris_common.Config
 }
 
-var RegexTopAnlage = regexp.MustCompile(`sitzung-([0-9]+)-top-([0-9]+)-anlage-(.+)`)
-var RegexAnlagen = regexp.MustCompile(`(vorlage|sitzung)-([0-9]+)-(basisanlage|anlage)-(([0-9]+)-(.+))`)
+var RegexTopAnlage = regexp.MustCompile(`anlagen/sitzung-([0-9]+)-top-([0-9]+)-anlage-(.+)`)
+var RegexAnlagen = regexp.MustCompile(`anlagen/(vorlage|sitzung)-([0-9]+)-(basisanlage|anlage)-(([0-9]+)-(.+))`)
 
 func (a *Anlage) GetKey(parentKey *datastore.Key) *datastore.Key {
 	kn := fmt.Sprintf("%d_%d_%d_%d_%s", a.DOLFDNR, a.SILFDNR, a.TOLFDNR, a.VOLFDNR, a.Title)

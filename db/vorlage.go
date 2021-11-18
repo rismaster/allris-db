@@ -42,7 +42,7 @@ type Vorlage struct {
 
 func NewVorlage(app *application.AppContext, file *files.File) (*Vorlage, error) {
 
-	volfdnrStr := strings.TrimPrefix(strings.TrimSuffix(file.GetName(), ".html"), "vorlage-")
+	volfdnrStr := strings.TrimPrefix(strings.TrimSuffix(file.GetName(), ".html"), "vorlagen/vorlage-")
 	volfdnr, err := strconv.Atoi(volfdnrStr)
 	if err != nil {
 		return nil, err
